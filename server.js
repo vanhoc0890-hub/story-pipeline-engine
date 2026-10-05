@@ -1165,7 +1165,10 @@ function buildCharacterCatalog(
         character.narrativeRole,
 
       storyRole:
-        character.storyRole
+        character.storyRole,
+
+      expressionProfile:
+        character.expressionProfile || {}
     })
   );
 }
@@ -1276,8 +1279,47 @@ CURRENT WORKFLOW INSTRUCTION:
 ${instruction}
 
 LOCKED CHARACTER CATALOG:
-Use ONLY these character IDs and names for recurring characters.
-Do not redesign them.
+
+Use ONLY these locked recurring characters.
+
+Each character includes:
+- id
+- name
+- narrativeRole
+- storyRole
+- expressionProfile
+
+Use the expressionProfile as the authoritative guide for role-appropriate facial expression and body language.
+
+Do not redesign characters.
+
+For every visible recurring character:
+- preserve the correct character id
+- match expression to the exact story moment
+- select expression behavior from the closest appropriate state in that character's expressionProfile
+
+For a main antagonist, expression must evolve with the story.
+
+Examples:
+
+If the antagonist is still controlling the situation:
+use the inControl profile.
+
+If actively accusing or confronting:
+use the confronting profile.
+
+If being resisted or questioned:
+use the challenged profile.
+
+If evidence or facts expose the antagonist:
+use the exposed profile.
+
+If the antagonist has clearly lost control or been proven wrong:
+use the defeated profile.
+
+Do not keep a main antagonist neutral when the story moment requires a stronger role-appropriate reaction.
+
+Do not invent an expression state that contradicts the current story moment.
 
 ${catalog}
 
