@@ -1561,69 +1561,163 @@ function buildSceneImagePrompt(
     characterIds
       .map(
         id =>
-          characterMap.get(
-            id
-          )
+          characterMap.get(id)
       )
       .filter(Boolean);
 
-  const identityText =
+  const identityParagraph =
     visibleCharacters.length
       ? visibleCharacters
           .map(
             character =>
-              `${character.name}: ${buildVisualSignature(character)}`
+              `${character.name} is ${buildVisualSignature(character)}`
           )
-          .join(
-            '. '
-          )
-      : 'No recurring locked character visible in this scene';
+          .join('. ') + '.'
+      : '';
 
-  const parts = [
-    `LOCKED CHARACTER IDENTITIES: ${identityText}.`,
+  const storyMoment =
+    cleanText(
+      scene.storyMoment
+    );
 
-    scene.action
-      ? `ACTION: ${scene.action}.`
+  const action =
+    cleanText(
+      scene.action
+    );
+
+  const emotion =
+    cleanText(
+      scene.emotion
+    );
+
+  const foreground =
+    cleanText(
+      scene.foreground
+    );
+
+  const midground =
+    cleanText(
+      scene.midground
+    );
+
+  const background =
+    cleanText(
+      scene.background
+    );
+
+  const camera =
+    cleanText(
+      scene.cameraSuggestion
+    );
+
+  const timeOfDay =
+    cleanText(
+      scene.timeOfDay
+    );
+
+  const lighting =
+    cleanText(
+      scene.lighting
+    );
+
+  const continuity =
+    cleanText(
+      scene.continuity
+    );
+
+  const sceneParagraphParts = [];
+
+  if (storyMoment) {
+    sceneParagraphParts.push(
+      storyMoment
+    );
+  }
+
+  if (action) {
+    sceneParagraphParts.push(
+      action
+    );
+  }
+
+  if (emotion) {
+    sceneParagraphParts.push(
+      `Visible facial expression and body language: ${emotion}`
+    );
+  }
+
+  const compositionParts = [];
+
+  if (foreground) {
+    compositionParts.push(
+      `foreground: ${foreground}`
+    );
+  }
+
+  if (midground) {
+    compositionParts.push(
+      `midground: ${midground}`
+    );
+  }
+
+  if (background) {
+    compositionParts.push(
+      `background: ${background}`
+    );
+  }
+
+  if (
+    compositionParts.length
+  ) {
+    sceneParagraphParts.push(
+      `The composition shows ${compositionParts.join('; ')}`
+    );
+  }
+
+  if (camera) {
+    sceneParagraphParts.push(
+      `Camera framing: ${camera}`
+    );
+  }
+
+  if (timeOfDay) {
+    sceneParagraphParts.push(
+      `Time of day: ${timeOfDay}`
+    );
+  }
+
+  if (lighting) {
+    sceneParagraphParts.push(
+      `Lighting: ${lighting}`
+    );
+  }
+
+  if (continuity) {
+    sceneParagraphParts.push(
+      `Preserve this established story state: ${continuity}`
+    );
+  }
+
+  const sceneParagraph =
+    sceneParagraphParts
+      .filter(Boolean)
+      .join('. ');
+
+  const identityRule =
+    visibleCharacters.length
+      ? 'Every recurring character shown here must preserve exactly the locked age, face shape, eyes, nose, mouth, jawline, skin tone, physique, hairstyle, hair color, facial hair, clothing, clothing colors, footwear, accessories, and permanent distinguishing features described above. Do not redesign, beautify, restyle, age up, age down, or substitute any recurring character.'
+      : '';
+
+  const qualityRule =
+    'Photorealistic live-action documentary-style photograph, believable real-world environment, realistic human anatomy, natural skin texture and pores, realistic hair strands and fabric texture, physically believable natural lighting and shadows, true-to-life colors, sharp primary subjects, tack-sharp visible faces and eyes, no CGI appearance, no illustration, no cartoon styling, no waxy or plastic skin.';
+
+  return [
+    identityParagraph,
+    sceneParagraph
+      ? `${sceneParagraph}.`
       : '',
-
-    scene.emotion
-      ? `EXPRESSION AND EMOTION: ${scene.emotion}.`
-      : '',
-
-    scene.foreground
-      ? `FOREGROUND: ${scene.foreground}.`
-      : '',
-
-    scene.midground
-      ? `MIDGROUND: ${scene.midground}.`
-      : '',
-
-    scene.background
-      ? `BACKGROUND: ${scene.background}.`
-      : '',
-
-    scene.cameraSuggestion
-      ? `CAMERA: ${scene.cameraSuggestion}.`
-      : '',
-
-    scene.timeOfDay
-      ? `TIME: ${scene.timeOfDay}.`
-      : '',
-
-    scene.lighting
-      ? `LIGHTING: ${scene.lighting}.`
-      : '',
-
-    scene.continuity
-      ? `CONTINUITY: ${scene.continuity}.`
-      : '',
-
-    'The same locked recurring character must remain visually identical across all scenes. Do not change age, face, eyes, hair, facial hair, skin tone, physique, clothing type, clothing colors, or distinguishing features.',
-
-    'Ultra photorealistic live-action professional DSLR photograph, realistic anatomy, natural physically accurate lighting, authentic skin and fabric texture, natural shadows, true-to-life colors, tack-sharp primary faces and eyes, realistic environment, no CGI, no illustration, no cartoon, no plastic skin.'
-  ];
-
-  return parts
+    identityRule,
+    qualityRule
+  ]
     .filter(Boolean)
     .join(' ');
 }
