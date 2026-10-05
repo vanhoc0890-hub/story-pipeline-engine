@@ -1424,7 +1424,30 @@ Required structure:
     }
   ]
 }
+EXPRESSION RULE FOR "emotion":
 
+The "emotion" field must describe the scene-specific visible expression and body language of EACH important recurring character visible in that scene.
+
+Do not write generic values such as:
+- serious
+- emotional
+- tense
+- dramatic
+- neutral
+
+when the locked expressionProfile provides a more specific role-appropriate state.
+
+When multiple recurring characters appear, describe them separately in the same emotion field.
+
+Example:
+
+"Ethan maintains restrained frustration with squared shoulders and steady eye contact; Claire holds her chin high with narrowed judgmental eyes, pursed lips, and a dismissive half-smile."
+
+Later, when the same antagonist is exposed, the expression must change appropriately:
+
+"Claire's earlier confidence is gone; her jaw is tight, eye contact breaks briefly, and visible discomfort and resentment show through her forced composure."
+
+Expressions must follow chronology and must not remain identical across unrelated story states.
 STRICT VALIDATION:
 - timeline length must equal 20
 - scenes length must equal 20
