@@ -335,7 +335,7 @@ ${script}
 }
 
 /* =====================================================
-   CHARACTER LOCK PARSER
+   CHARACTER LOCK PARSER + NORMALIZER
 ===================================================== */
 
 function slugify(
@@ -356,7 +356,276 @@ function slugify(
     )
     .replace(
       /^_+|_+$/g,
-      '');
+      ''
+    );
+}
+
+function isMeaningfulLockValue(
+  value
+) {
+  const cleaned =
+    cleanText(value);
+
+  if (!cleaned) {
+    return false;
+  }
+
+  return ![
+    'none',
+    'n/a',
+    'na',
+    'null',
+    'undefined',
+    'unknown'
+  ].includes(
+    cleaned.toLowerCase()
+  );
+}
+
+function normalizeAliases(
+  value
+) {
+  if (Array.isArray(value)) {
+    return value
+      .map(
+        item =>
+          cleanText(item)
+      )
+      .filter(Boolean);
+  }
+
+  const cleaned =
+    cleanText(value);
+
+  if (
+    !cleaned ||
+    /^none$/i.test(cleaned)
+  ) {
+    return [];
+  }
+
+  return cleaned
+    .split(',')
+    .map(
+      item =>
+        cleanText(item)
+    )
+    .filter(Boolean);
+}
+
+function normalizeExpressionProfile(
+  value
+) {
+  const source =
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value)
+      ? value
+      : {};
+
+  return {
+    baseline:
+      cleanText(
+        source.baseline
+      ),
+
+    focused:
+      cleanText(
+        source.focused ||
+        source.pressionProfile
+      ),
+
+    concerned:
+      cleanText(
+        source.concerned
+      ),
+
+    inControl:
+      cleanText(
+        source.inControl
+      ),
+
+    confronting:
+      cleanText(
+        source.confronting
+      ),
+
+    challenged:
+      cleanText(
+        source.challenged
+      ),
+
+    exposed:
+      cleanText(
+        source.exposed
+      ),
+
+    defeated:
+      cleanText(
+        source.defeated
+      ),
+
+    relieved:
+      cleanText(
+        source.relieved
+      )
+  };
+}
+
+function normalizeCharacterLock(
+  rawCharacter
+) {
+  if (
+    !rawCharacter ||
+    typeof rawCharacter !== 'object'
+  ) {
+    return null;
+  }
+
+  const name =
+    cleanText(
+      rawCharacter.name
+    );
+
+  if (!name) {
+    return null;
+  }
+
+  const requestedId =
+    cleanText(
+      rawCharacter.id
+    );
+
+  const id =
+    requestedId.startsWith('char_')
+      ? requestedId
+      : `char_${slugify(name)}`;
+
+  const ageNumber =
+    Number(
+      rawCharacter.ageExact
+    );
+
+  const character = {
+    id,
+
+    name,
+
+    aliases:
+      normalizeAliases(
+        rawCharacter.aliases
+      ),
+
+    narrativeRole:
+      cleanText(
+        rawCharacter.narrativeRole
+      ),
+
+    storyRole:
+      cleanText(
+        rawCharacter.storyRole
+      ),
+
+    ageExact:
+      Number.isFinite(ageNumber) &&
+      ageNumber > 0
+        ? ageNumber
+        : cleanText(
+            rawCharacter.ageExact
+          ),
+
+    gender:
+      cleanText(
+        rawCharacter.gender
+      ),
+
+    skinTone:
+      cleanText(
+        rawCharacter.skinTone
+      ),
+
+    physique:
+      cleanText(
+        rawCharacter.physique
+      ),
+
+    faceShape:
+      cleanText(
+        rawCharacter.faceShape
+      ),
+
+    eyes:
+      cleanText(
+        rawCharacter.eyes
+      ),
+
+    nose:
+      cleanText(
+        rawCharacter.nose
+      ),
+
+    mouth:
+      cleanText(
+        rawCharacter.mouth
+      ),
+
+    jawline:
+      cleanText(
+        rawCharacter.jawline
+      ),
+
+    hairStyle:
+      cleanText(
+        rawCharacter.hairStyle
+      ),
+
+    hairColor:
+      cleanText(
+        rawCharacter.hairColor
+      ),
+
+    facialHair:
+      cleanText(
+        rawCharacter.facialHair
+      ),
+
+    clothing:
+      cleanText(
+        rawCharacter.clothing
+      ),
+
+    clothingColors:
+      cleanText(
+        rawCharacter.clothingColors
+      ),
+
+    footwear:
+      cleanText(
+        rawCharacter.footwear
+      ),
+
+    accessories:
+      cleanText(
+        rawCharacter.accessories
+      ),
+
+    distinguishingFeatures:
+      cleanText(
+        rawCharacter.distinguishingFeatures
+      ),
+
+    expressionProfile:
+      normalizeExpressionProfile(
+        rawCharacter.expressionProfile
+      )
+  };
+
+  character.visualSignature =
+    buildVisualSignature(
+      character
+    );
+
+  return character;
 }
 
 function fieldFromBlock(
@@ -379,31 +648,7 @@ function fieldFromBlock(
   );
 }
 
-function parseAliases(
-  value
-) {
-  const cleaned =
-    cleanText(value);
-
-  if (
-    !cleaned ||
-    /^none$/i.test(
-      cleaned
-    )
-  ) {
-    return [];
-  }
-
-  return cleaned
-    .split(',')
-    .map(
-      item =>
-        cleanText(item)
-    )
-    .filter(Boolean);
-}
-
-function parseCharacterLocks(
+function parseLegacyCharacterLocks(
   text
 ) {
   const source =
@@ -442,24 +687,13 @@ function parseCharacterLocks(
           return null;
         }
 
-        const masterCharacterLock =
-          fieldFromBlock(
-            block,
-            'MASTER CHARACTER LOCK'
-          );
-
-        const character = {
-          id:
-            `char_${slugify(name)}`,
-
+        return normalizeCharacterLock({
           name,
 
           aliases:
-            parseAliases(
-              fieldFromBlock(
-                block,
-                'ALIASES'
-              )
+            fieldFromBlock(
+              block,
+              'ALIASES'
             ),
 
           narrativeRole:
@@ -576,84 +810,290 @@ function parseCharacterLocks(
               'DISTINGUISHING FEATURES'
             ),
 
-          masterCharacterLock
-        };
-
-        return character;
+          expressionProfile: {}
+        });
       }
     )
     .filter(Boolean);
 }
 
+function parseCharacterLocks(
+  input
+) {
+  if (
+    input === null ||
+    input === undefined
+  ) {
+    return [];
+  }
+
+  let data =
+    input;
+
+  if (
+    typeof input === 'string'
+  ) {
+    const source =
+      cleanText(input);
+
+    if (!source) {
+      return [];
+    }
+
+    try {
+      data =
+        parseJsonOutput(
+          source
+        );
+    } catch {
+      return parseLegacyCharacterLocks(
+        source
+      );
+    }
+  }
+
+  let rawCharacters = [];
+
+  if (
+    Array.isArray(data)
+  ) {
+    rawCharacters =
+      data;
+  } else if (
+    data &&
+    typeof data === 'object' &&
+    Array.isArray(
+      data.characters
+    )
+  ) {
+    rawCharacters =
+      data.characters;
+  }
+
+  const characters =
+    rawCharacters
+      .map(
+        character =>
+          normalizeCharacterLock(
+            character
+          )
+      )
+      .filter(Boolean);
+
+  if (
+    characters.length === 0
+  ) {
+    return [];
+  }
+
+  const usedIds =
+    new Set();
+
+  for (
+    const character of
+    characters
+  ) {
+    if (
+      usedIds.has(
+        character.id
+      )
+    ) {
+      throw new Error(
+        `DUPLICATE_CHARACTER_ID_${character.id}`
+      );
+    }
+
+    usedIds.add(
+      character.id
+    );
+  }
+
+  return characters;
+}
+
 function buildVisualSignature(
   character
 ) {
-  if (
-    character.masterCharacterLock
-  ) {
-    return character.masterCharacterLock;
+  const pieces = [];
+
+  const age =
+    cleanText(
+      character.ageExact
+    );
+
+  const gender =
+    cleanText(
+      character.gender
+    );
+
+  if (age && gender) {
+    pieces.push(
+      `${age}-year-old ${gender}`
+    );
+  } else if (age) {
+    pieces.push(
+      `${age}-year-old`
+    );
+  } else if (gender) {
+    pieces.push(
+      gender
+    );
   }
 
-  const pieces = [
-    character.ageExact
-      ? `${character.ageExact}-year-old`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.skinTone
+    )
+  ) {
+    pieces.push(
+      character.skinTone
+    );
+  }
 
-    character.skinTone,
-    character.gender,
-    character.physique,
+  if (
+    isMeaningfulLockValue(
+      character.physique
+    )
+  ) {
+    pieces.push(
+      character.physique
+    );
+  }
 
-    character.faceShape
-      ? `${character.faceShape} face`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.faceShape
+    )
+  ) {
+    pieces.push(
+      character.faceShape
+    );
+  }
 
-    character.eyes
-      ? `${character.eyes} eyes`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.eyes
+    )
+  ) {
+    pieces.push(
+      character.eyes
+    );
+  }
 
-    character.nose
-      ? `${character.nose} nose`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.nose
+    )
+  ) {
+    pieces.push(
+      character.nose
+    );
+  }
 
-    character.mouth
-      ? `${character.mouth} mouth`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.mouth
+    )
+  ) {
+    pieces.push(
+      character.mouth
+    );
+  }
 
-    character.jawline
-      ? `${character.jawline} jawline`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.jawline
+    )
+  ) {
+    pieces.push(
+      character.jawline
+    );
+  }
 
-    character.hairStyle,
-    character.hairColor
-      ? `${character.hairColor} hair`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.hairStyle
+    )
+  ) {
+    pieces.push(
+      character.hairStyle
+    );
+  }
 
-    character.facialHair,
+  if (
+    isMeaningfulLockValue(
+      character.hairColor
+    )
+  ) {
+    pieces.push(
+      character.hairColor
+    );
+  }
 
-    character.clothing
-      ? `wearing ${character.clothing}`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.facialHair
+    )
+  ) {
+    pieces.push(
+      character.facialHair
+    );
+  }
 
-    character.clothingColors
-      ? `clothing colors ${character.clothingColors}`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.clothing
+    )
+  ) {
+    pieces.push(
+      `wearing ${character.clothing}`
+    );
+  }
 
-    character.footwear
-      ? `footwear ${character.footwear}`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.clothingColors
+    )
+  ) {
+    pieces.push(
+      `clothing colors ${character.clothingColors}`
+    );
+  }
 
-    character.accessories
-      ? `accessories ${character.accessories}`
-      : '',
+  if (
+    isMeaningfulLockValue(
+      character.footwear
+    )
+  ) {
+    pieces.push(
+      `footwear ${character.footwear}`
+    );
+  }
 
-    character.distinguishingFeatures
-  ];
+  if (
+    isMeaningfulLockValue(
+      character.accessories
+    )
+  ) {
+    pieces.push(
+      `accessories ${character.accessories}`
+    );
+  }
 
-  return pieces
-    .filter(Boolean)
-    .join(', ');
+  if (
+    isMeaningfulLockValue(
+      character.distinguishingFeatures
+    )
+  ) {
+    pieces.push(
+      `distinguishing features ${character.distinguishingFeatures}`
+    );
+  }
+
+  return pieces.join(
+    ', '
+  );
 }
-
 /* =====================================================
    PREVIOUS OUTPUT LOOKUP
 ===================================================== */
