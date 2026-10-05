@@ -1963,25 +1963,6 @@ function buildSceneImagePrompt(
     .filter(Boolean)
     .join(' ');
 }
-  const identityRule =
-    visibleCharacters.length
-      ? 'Every recurring character shown here must preserve exactly the locked age, face shape, eyes, nose, mouth, jawline, skin tone, physique, hairstyle, hair color, facial hair, clothing, clothing colors, footwear, accessories, and permanent distinguishing features described above. Do not redesign, beautify, restyle, age up, age down, or substitute any recurring character.'
-      : '';
-
-  const qualityRule =
-    'Photorealistic live-action documentary-style photograph, believable real-world environment, realistic human anatomy, natural skin texture and pores, realistic hair strands and fabric texture, physically believable natural lighting and shadows, true-to-life colors, sharp primary subjects, tack-sharp visible faces and eyes, no CGI appearance, no illustration, no cartoon styling, no waxy or plastic skin.';
-
-  return [
-    identityParagraph,
-    sceneParagraph
-      ? `${sceneParagraph}.`
-      : '',
-    identityRule,
-    qualityRule
-  ]
-    .filter(Boolean)
-    .join(' ');
-}
 
 /* =====================================================
    FINAL JSON PIPELINE
