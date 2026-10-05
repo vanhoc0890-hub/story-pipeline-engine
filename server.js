@@ -2040,6 +2040,21 @@ async function runFinalJsonPipeline({
       characters
     );
   const locationMap =
+  locationMapFromList(
+    scenePlan.locations
+  );
+
+const propMap =
+  propMapFromList(
+    scenePlan.props
+  );
+
+const vehicleMap =
+  vehicleMapFromList(
+    scenePlan.vehicles
+  );
+  
+  const locationMap =
     locationMapFromList(
       scenePlan.locations
     );
