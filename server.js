@@ -2126,10 +2126,13 @@ async function runFinalJsonPipeline({
           ),
 
         imagePrompt:
-          buildSceneImagePrompt(
-            scene,
-            characterMap
-          )
+  buildSceneImagePrompt(
+    scene,
+    characterMap,
+    locationMap,
+    propMap,
+    vehicleMap
+  )
       })
     );
 
