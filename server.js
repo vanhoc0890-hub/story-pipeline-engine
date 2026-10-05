@@ -1546,9 +1546,120 @@ function characterMapFromList(
   return map;
 }
 
+function locationMapFromList(
+  locations
+) {
+  const map =
+    new Map();
+
+  if (
+    !Array.isArray(
+      locations
+    )
+  ) {
+    return map;
+  }
+
+  for (
+    const location of
+    locations
+  ) {
+    const id =
+      cleanText(
+        location?.id
+      );
+
+    if (!id) {
+      continue;
+    }
+
+    map.set(
+      id,
+      location
+    );
+  }
+
+  return map;
+}
+
+function propMapFromList(
+  props
+) {
+  const map =
+    new Map();
+
+  if (
+    !Array.isArray(
+      props
+    )
+  ) {
+    return map;
+  }
+
+  for (
+    const prop of
+    props
+  ) {
+    const id =
+      cleanText(
+        prop?.id
+      );
+
+    if (!id) {
+      continue;
+    }
+
+    map.set(
+      id,
+      prop
+    );
+  }
+
+  return map;
+}
+
+function vehicleMapFromList(
+  vehicles
+) {
+  const map =
+    new Map();
+
+  if (
+    !Array.isArray(
+      vehicles
+    )
+  ) {
+    return map;
+  }
+
+  for (
+    const vehicle of
+    vehicles
+  ) {
+    const id =
+      cleanText(
+        vehicle?.id
+      );
+
+    if (!id) {
+      continue;
+    }
+
+    map.set(
+      id,
+      vehicle
+    );
+  }
+
+  return map;
+}
+
 function buildSceneImagePrompt(
   scene,
-  characterMap
+  characterMap,
+  locationMap,
+  propMap,
+  vehicleMap
 ) {
   const characterIds =
     Array.isArray(
@@ -1565,6 +1676,37 @@ function buildSceneImagePrompt(
       )
       .filter(Boolean);
 
+  const location =
+    scene.locationId
+      ? locationMap.get(
+          scene.locationId
+        )
+      : null;
+
+  const visibleProps =
+    Array.isArray(
+      scene.propIds
+    )
+      ? scene.propIds
+          .map(
+            id =>
+              propMap.get(id)
+          )
+          .filter(Boolean)
+      : [];
+
+  const visibleVehicles =
+    Array.isArray(
+      scene.vehicleIds
+    )
+      ? scene.vehicleIds
+          .map(
+            id =>
+              vehicleMap.get(id)
+          )
+          .filter(Boolean)
+      : [];
+
   const identityParagraph =
     visibleCharacters.length
       ? visibleCharacters
@@ -1573,6 +1715,88 @@ function buildSceneImagePrompt(
               `${character.name} is ${buildVisualSignature(character)}`
           )
           .join('. ') + '.'
+      : '';
+
+  const locationParagraph =
+    location
+      ? [
+          cleanText(
+            location.name
+          ),
+          cleanText(
+            location.type
+          ),
+          cleanText(
+            location.description
+          ),
+          Array.isArray(
+            location.keyFeatures
+          )
+            ? location.keyFeatures
+                .map(
+                  item =>
+                    cleanText(item)
+                )
+                .filter(Boolean)
+                .join(', ')
+            : ''
+        ]
+          .filter(Boolean)
+          .join(', ')
+      : '';
+
+  const propParagraph =
+    visibleProps.length
+      ? visibleProps
+          .map(
+            prop => {
+              const name =
+                cleanText(
+                  prop.name
+                );
+
+              const description =
+                cleanText(
+                  prop.description
+                );
+
+              return [
+                name,
+                description
+              ]
+                .filter(Boolean)
+                .join(': ');
+            }
+          )
+          .filter(Boolean)
+          .join('; ')
+      : '';
+
+  const vehicleParagraph =
+    visibleVehicles.length
+      ? visibleVehicles
+          .map(
+            vehicle => {
+              const name =
+                cleanText(
+                  vehicle.name
+                );
+
+              const description =
+                cleanText(
+                  vehicle.description
+                );
+
+              return [
+                name,
+                description
+              ]
+                .filter(Boolean)
+                .join(': ');
+            }
+          )
+          .filter(Boolean)
+          .join('; ')
       : '';
 
   const storyMoment =
@@ -1639,6 +1863,24 @@ function buildSceneImagePrompt(
     );
   }
 
+  if (locationParagraph) {
+    sceneParagraphParts.push(
+      `The scene takes place at ${locationParagraph}`
+    );
+  }
+
+  if (propParagraph) {
+    sceneParagraphParts.push(
+      `Important visible story objects: ${propParagraph}`
+    );
+  }
+
+  if (vehicleParagraph) {
+    sceneParagraphParts.push(
+      `Important visible vehicles: ${vehicleParagraph}`
+    );
+  }
+
   if (emotion) {
     sceneParagraphParts.push(
       `Visible facial expression and body language: ${emotion}`
@@ -1702,6 +1944,25 @@ function buildSceneImagePrompt(
       .filter(Boolean)
       .join('. ');
 
+  const identityRule =
+    visibleCharacters.length
+      ? 'Every recurring character shown here must preserve exactly the locked age, face shape, eyes, nose, mouth, jawline, skin tone, physique, hairstyle, hair color, facial hair, clothing, clothing colors, footwear, accessories, and permanent distinguishing features described above. Do not redesign, beautify, restyle, age up, age down, or substitute any recurring character.'
+      : '';
+
+  const qualityRule =
+    'Photorealistic live-action documentary-style photograph, believable real-world environment, realistic human anatomy, natural skin texture and pores, realistic hair strands and fabric texture, physically believable natural lighting and shadows, true-to-life colors, sharp primary subjects, tack-sharp visible faces and eyes, no CGI appearance, no illustration, no cartoon styling, no waxy or plastic skin.';
+
+  return [
+    identityParagraph,
+    sceneParagraph
+      ? `${sceneParagraph}.`
+      : '',
+    identityRule,
+    qualityRule
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
   const identityRule =
     visibleCharacters.length
       ? 'Every recurring character shown here must preserve exactly the locked age, face shape, eyes, nose, mouth, jawline, skin tone, physique, hairstyle, hair color, facial hair, clothing, clothing colors, footwear, accessories, and permanent distinguishing features described above. Do not redesign, beautify, restyle, age up, age down, or substitute any recurring character.'
